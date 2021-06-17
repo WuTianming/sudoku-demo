@@ -1,5 +1,5 @@
 #include "sudokugame.h"
-#include <cstdio>
+#include "sudokunode.h"
 
 // the constructor in turn calls the constructor of the random generator.
 SudokuGame::SudokuGame() : rand(time(NULL)) {}
@@ -7,18 +7,15 @@ SudokuGame::SudokuGame(unsigned seed) : rand(seed) {}
 // SudokuGame::SudokuGame() : rand(QDateTime::currentMSecsSinceEpoch())
 
 // try to generate valid filled Sudoku puzzles using rand17 & solve method
-bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 8)
+bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 9)
 {
     uint16_t flag[4][9];
     memset(s, 0, sizeof(int) * 81);
     memset(flag, 0, sizeof(flag));
     for (int T = 1; T <= 17; T++) {
         int i = rand() % 9, j = rand() % 9;
-        while (s[i][j]) { i = rand() % 9, j = rand() % 9; }
-        int id = (i/3) * 3 + j/3;
-        uint16_t fff = flag[0][id] | flag[1][j] | flag[2][i];
-        if (i == j) fff |= flag[3][0];
-        if (i+j==8) fff |= flag[3][1];
+        while (s[i][j]) i = rand()%9, j = rand()%9;
+        uint16_t fff = get_flag(flag, i, j);
         int cnt = count_bits(fff);
         if (cnt == 9) return false;
         int it = rand() % (9 - cnt) + 1;
@@ -27,20 +24,17 @@ bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 8)
             if (!(fff & (1u << k))) it--;
             if (!it) {
                 // then fill in
+                set_flag(flag, i, j, k);
                 s[i][j] = k;
-                flag[0][id] ^= (1u << k);
-                flag[1][j]  ^= (1u << k);
-                flag[2][i]  ^= (1u << k);
-                if (i == j) flag[3][0] ^= (1u << k);
-                if (i+j==8) flag[3][1] ^= (1u << k);
                 break;
             }
         }
     }
     int reached = 0;
-    for (int k = std::min(5, dep - 4); k <= dep; k++, reached = 0) {
-        if (this->ids(s, flag, 1, k, reached)) { return true; }
-        if (reached != k) { return false; }
+    // return astar(s);
+    for (int k = std::min(dep, 4); k <= dep; k++, reached = 0) {
+        if (ids(s, flag, 1, k, reached)) return true;
+        if (reached != k) return false;
     }
     return false;
 }
@@ -48,27 +42,10 @@ bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 8)
 // generate valid filled Sudoku puzzles
 void SudokuGame::GeneratePuzzle()
 {
-    // int Gen[9][9];
-    // memset(Gen, 0, sizeof(Gen));
     memset(gameBoard, 0, sizeof(gameBoard));
-    // int digits[10] = {0,1,2,3,4,5,6,7,8,9};
-    // std::shuffle(digits + 1, digits + 10, rand);
-    // maybe something like a randomized IDS?
     int i = 0;
-    int per[] = { 7, 7, 9 };
+    static int per[] = { 7, 9, 14 };
     while (!GenSolvable_rand17(gameBoard, per[i])) { (++i) %= 3; }
-
-    /* shuffle Gen[][]
-    int shuffle3_1[9] = {0,1,2,3,4,5,6,7,8};
-    int shuffle3_2[9] = {0,1,2,3,4,5,6,7,8};
-    for (int i = 0; i < 3; i++) {
-        std::shuffle(shuffle3_1 + 3 * i, shuffle3_1 + 3 + 3 * i, rand);
-        std::shuffle(shuffle3_2 + 3 * i, shuffle3_2 + 3 + 3 * i, rand);
-    }
-    for (int i = 0; i < 9; i++)
-        for (int j = 0; j < 9; j++)
-            gameBoard[shuffle3_1[i]][shuffle3_2[j]] = Gen[i][j];
-    */
 }
 
 // dig holes in gameBoard so that certain cells are left out
@@ -92,39 +69,45 @@ int SudokuGame::at(int i, int j)
         return 0;
 }
 
-bool SudokuGame::isValid(const int (*ans)[9][9])
+bool SudokuGame::verify(const int ans[9][9])
 {
-    if (ans == NULL) ans = &gameBoard;
     int cnt[10], tot = 0;
     memset(cnt, 0, sizeof(cnt)); cnt[0] = -10000;
     ++tot;
+#ifdef XSUDOKU
     // check two diagonals
     for (int i = 0; i < 9; i++)
-        if (cnt[(*ans)[i][i]] != tot - 1) return false;
-        else cnt[(*ans)[i][i]] = tot;
+        if (cnt[ans[i][i]] != tot - 1) return false;
+        else cnt[ans[i][i]] = tot;
     ++tot;
     for (int i = 0; i < 9; i++)
-        if (cnt[(*ans)[i][9-i]] != tot - 1) return false;
-        else cnt[(*ans)[i][9-i]] = tot;
+        if (cnt[ans[i][8-i]] != tot - 1) return false;
+        else cnt[ans[i][8-i]] = tot;
     ++tot;
+#endif
     // check every row
     for (int i = 0; i < 9; i++, tot++)
         for (int j = 0; j < 9; j++)
-            if (cnt[(*ans)[i][j]] != tot - 1) return false;
-            else cnt[(*ans)[i][j]] = tot;
+            if (cnt[ans[i][j]] != tot - 1) return false;
+            else cnt[ans[i][j]] = tot;
     // check every column
     for (int j = 0; j < 9; j++, tot++)
         for (int i = 0; i < 9; i++)
-            if (cnt[(*ans)[i][j]] != tot - 1) return false;
-            else cnt[(*ans)[i][j]] = tot;
+            if (cnt[ans[i][j]] != tot - 1) return false;
+            else cnt[ans[i][j]] = tot;
     // check every block
     for (int i = 0; i < 9; i += 3)
         for (int j = 0; j < 9; j += 3, tot++)
             for (int k = i; k < i + 3; k++)
                 for (int l = j; l < j + 3; l++)
-                    if (cnt[(*ans)[k][l]] != tot - 1) return false;
-                    else cnt[(*ans)[k][l]] = tot;
+                    if (cnt[ans[k][l]] != tot - 1) return false;
+                    else cnt[ans[k][l]] = tot;
     return true;
+}
+
+bool SudokuGame::isValid()
+{
+    return verify(this->gameBoard);
 }
 
 // copy gameboard from external data
@@ -142,25 +125,14 @@ bool SudokuGame::dfs(int stk[9][9],
     for (int i = i0; i < 9; i++) {
         for (int j = ((i == i0) ? j0 + 1 : 0); j < 9; j++) {
             if (!stk[i][j]) {
-                int id = (i/3) * 3 + j/3;
-                uint16_t fff = flag[0][id] | flag[1][j] | flag[2][i];
-                if (i == j) fff |= flag[3][0];
-                if (i+j==8) fff |= flag[3][1];
+                uint16_t fff = get_flag(flag, i, j);
                 for (int k = 1; k <= 9; k++) {
                     if (fff & (1u << k)) continue;
-                    flag[0][id] ^= (1u << k);
-                    flag[1][j]  ^= (1u << k);
-                    flag[2][i]  ^= (1u << k);
-                    if (i == j) flag[3][0] ^= (1u << k);
-                    if (i+j==8) flag[3][1] ^= (1u << k);
+                    set_flag(flag, i, j, k);
                     stk[i][j] = k;
                     bool f = dfs(stk, flag, i, j);
                     if (f) { return true; }
-                    flag[0][id] ^= (1u << k);
-                    flag[1][j]  ^= (1u << k);
-                    flag[2][i]  ^= (1u << k);
-                    if (i == j) flag[3][0] ^= (1u << k);
-                    if (i+j==8) flag[3][1] ^= (1u << k);
+                    set_flag(flag, i, j, k);
                     stk[i][j] = 0;
                 }
                 return false;
@@ -176,9 +148,10 @@ bool SudokuGame::ids(int stk[9][9],
 {
     if (nowdep > maxdep) return false;
     if (nowdep > dep_reached) dep_reached = nowdep;
-    int mi = -1, mj = -1, mid = -1; int mcnt = 0;
+    int mi = -1, mj = -1; int mcnt = 0;
     bool finished = true;
     std::vector<std::pair<int, int> > changes_to_be_reverted;
+    // changes_to_be_reverted.reserve(80);
     // iteratively check if we can uniquely determine some cells
     bool Iterate = true;
     while (Iterate) {
@@ -186,10 +159,7 @@ bool SudokuGame::ids(int stk[9][9],
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 if (stk[i][j] != 0) continue;
-                int id = (i/3) * 3 + j/3;
-                uint16_t fff = flag[0][id] | flag[1][j] | flag[2][i];
-                if (i == j) fff |= flag[3][0];
-                if (i+j==8) fff |= flag[3][1];
+                uint16_t fff = get_flag(flag, i, j);
                 int cnt = count_bits(fff);
                 if (cnt == 9) {
                 // there is a contradiction: all numbers have appeared in the region,
@@ -202,11 +172,7 @@ bool SudokuGame::ids(int stk[9][9],
                 for (int k = 1; k <= 9; k++) {
                     if (!(fff & (1u << k))) {
                         stk[i][j] = k;
-                        flag[0][id] ^= (1u << k);
-                        flag[1][j]  ^= (1u << k);
-                        flag[2][i]  ^= (1u << k);
-                        if (i == j) flag[3][0] ^= (1u << k);
-                        if (i+j==8) flag[3][1] ^= (1u << k);
+                        set_flag(flag, i, j, k);
                 // changes made here need to be reverted if subsequent
                 //   recursions should fail. hence we record the changes in an
                 //   std::vector.
@@ -224,111 +190,119 @@ bool SudokuGame::ids(int stk[9][9],
         for (int j = 0; j < 9; j++) {
             if (stk[i][j] != 0) continue;
             finished = false;
-            int id = (i/3) * 3 + j/3;
-            uint16_t fff = flag[0][id] | flag[1][j] | flag[2][i];
-            if (i == j) fff |= flag[3][0];
-            if (i+j==8) fff |= flag[3][1];
+            uint16_t fff = get_flag(flag, i, j);
             int cnt = count_bits(fff);
             if (cnt > mcnt) {
-                mi = i, mj = j, mid = id, mcnt = cnt;
+                mi = i, mj = j, mcnt = cnt;
             }
+            // if (mcnt == 7) break;
         }
     }
     if (finished) { return true; }
 
     // now go into recursion
-    for (int k = 1; k <= 9; k++) {
-        if (!((flag[0][mid] | flag[1][mj] | flag[2][mi]) & (1u << k))) {
-            flag[0][mid] ^= (1u << k);
-            flag[1][mj]  ^= (1u << k);
-            flag[2][mi]  ^= (1u << k);
-            if (mi == mj) flag[3][0] ^= (1u << k);
-            if (mi+mj==8) flag[3][1] ^= (1u << k);
-            stk[mi][mj] = k;
-            finished = ids(stk, flag, nowdep + 1, maxdep, dep_reached);
-            if (finished) return true;
-            flag[0][mid] ^= (1u << k);
-            flag[1][mj]  ^= (1u << k);
-            flag[2][mi]  ^= (1u << k);
-            if (mi == mj) flag[3][0] ^= (1u << k);
-            if (mi+mj==8) flag[3][1] ^= (1u << k);
-            stk[mi][mj] = 0;
+    do {
+        uint16_t fff = get_flag(flag, mi, mj);
+        for (int k = 1; k <= 9; k++) {
+            if (!(fff & (1u << k))) {
+                set_flag(flag, mi, mj, k);
+                stk[mi][mj] = k;
+                finished = ids(stk, flag, nowdep + 1, maxdep, dep_reached);
+                if (finished) return true;
+                set_flag(flag, mi, mj, k);
+                stk[mi][mj] = 0;
+            }
         }
-    }
+    } while(false);
 
-    // now revert all the changes made since we didn't succeed & return true
+    // now revert all the changes made since we didn't succeed
     // the `goto` statement is used here rationally, with no side-effect
 CLEANUP_AND_EXIT:
     for (auto &&p : changes_to_be_reverted) {
-        int i = p.first, j = p.second;
-        int &k = stk[i][j];
-        int id = (i/3) * 3 + j/3;
-        flag[0][id] ^= (1u << k);
-        flag[1][j]  ^= (1u << k);
-        flag[2][i]  ^= (1u << k);
-        if (i == j) flag[3][0] ^= (1u << k);
-        if (i+j==8) flag[3][1] ^= (1u << k);
-        k = 0;
+        int &i = p.first, &j = p.second;
+        set_flag(flag, i, j, stk[i][j]);
+        stk[i][j] = 0;
     }
     return false;
 }
 
-int SudokuGame::count_bits(int t)
+// TODO
+bool SudokuGame::astar(int stk[9][9])
 {
-#define lowbit(t) ((t) & (-(t)))
-    int cnt = 0;
-    while (t) {
-        t ^= lowbit(t);
-        ++cnt;
+    std::priority_queue<SudokuNode> Q;
+    Q.emplace(stk);
+    while (!Q.empty()) {
+        SudokuNode p = Q.top();
+        Q.pop();
+        // find neighbour
+        int mi, mj, mcnt = 0;
+        bool finished = true;
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (p.a[i][j] != 0) continue;
+                finished = false;
+                int cnt = count_bits(get_flag(p.flag, i, j));
+                if (cnt > mcnt) { mi = i, mj = j, mcnt = cnt; }
+                if (mcnt == 8) break;
+            }
+        }
+        if (finished) {
+            // p is complete
+            memcpy(stk, p.a, sizeof(int) * 81);
+            return true;
+        }
+        uint16_t fff = get_flag(p.flag, mi, mj);
+        for (int k = 1; k <= 9; k++) {
+            if (!(fff & (1u << k))) {
+                set_flag(p.flag, mi, mj, k);
+                p.a[mi][mj] = k;
+                p.cal_cost() += 9 - mcnt;
+                Q.push(p);
+                set_flag(p.flag, mi, mj, k);
+                p.a[mi][mj] = 0;
+            }
+        }
     }
-    return cnt;
-#undef lowbit
+    return false;
+}
+
+bool SudokuGame::cal_flag(const int s[9][9], uint16_t flag[4][9])
+{
+    memset(flag, 0, sizeof(uint16_t) * 36);
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            if (!s[i][j]) continue;
+            if (get_flag(flag, i, j) & (1u << s[i][j])) { return false; }
+            set_flag(flag, i, j, s[i][j]);
+        }
+    }
+    return true;
 }
 
 bool SudokuGame::GetSolution(int (*p)[9][9], int MOD)
 {
     // uniqueness not guaranteed
-    // first calculate bit-flags in { blocks, columns, rows, diagonals }
     uint16_t flag[4][9];
-    memset(flag, 0, sizeof(flag));
+    // memset(flag, 0, sizeof(flag));
+    // first calculate bit-flags in { blocks, columns, rows, diagonals }
     int maxdep = 0;             // for ids
-    for (int i = 0; i < 9; i++) {
-        for (int j = 0; j < 9; j++) {
-            if (!(*p)[i][j]) { ++maxdep; continue; }
-            // blocks
-            int id = (i/3) * 3 + j/3;
-            if (flag[0][id] & (1u << (*p)[i][j])) { return false; }
-            flag[0][id] |= (1u << (*p)[i][j]);
-            // columns
-            if (flag[1][j]  & (1u << (*p)[i][j])) { return false; }
-            flag[1][j]  |= (1u << (*p)[i][j]);
-            // rows
-            if (flag[2][i]  & (1u << (*p)[i][j])) { return false; }
-            flag[2][i]  |= (1u << (*p)[i][j]);
-            // diagonals
-            if (i == j) {
-                if (flag[3][0] & (1u << (*p)[i][j])) { return false; }
-                flag[3][0] |= (1u << (*p)[i][j]);
-            }
-            if (i+j==8) {
-                if (flag[3][1] & (1u << (*p)[i][j])) { return false; }
-                flag[3][1] |= (1u << (*p)[i][j]);
-            }
-        }
-    }
-    bool f = false;
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            maxdep += !(*p)[i][j];
     int reached = 0;
     switch (MOD) {
         case SudokuGame::STABLE_DFS:
-            f = this->dfs(*p, flag, 0, -1);
-            return f;
+            cal_flag(*p, flag);
+            return dfs(*p, flag, 0, -1);
             break;
         case SudokuGame::DFS:
-            return this->ids(*p, flag, 1, maxdep, reached);
+            cal_flag(*p, flag);
+            return ids(*p, flag, 1, 81, reached);
             break;
         case SudokuGame::IDS:
-            for (int k = std::min(maxdep, 7); k <= maxdep; k++, reached = 0) {
-                if (this->ids(*p, flag, 1, k, reached))
+            cal_flag(*p, flag);
+            for (int k = std::min(maxdep, 5); k <= maxdep; k++, reached = 0) {
+                if (ids(*p, flag, 1, k, reached))
                     return true;
                 // when the IDS search doesn't go beyond maxdep=k,
                 //   the sudoku has no solution
@@ -338,7 +312,7 @@ bool SudokuGame::GetSolution(int (*p)[9][9], int MOD)
             return false;
             break;
         case SudokuGame::ASTAR:
-            throw "not implemented";
+            return astar(*p);
             break;
         case SudokuGame::IDASTAR:
             throw "not implemented";
@@ -353,6 +327,7 @@ bool SudokuGame::GetSolution(int (*p)[9][9], int MOD)
     return false;
 }
 
+// TODO 将当前的数独状态，记录名称，当前时间保存到同一目录的文件下
 void SudokuGame::Save(const char *filename, const int (*current)[9][9])
 {
     // saves the reference board and current filled board
@@ -381,5 +356,6 @@ bool SudokuGame::Read(const char *filename, int (*current)[9][9])
                 gameBoard[i][j] = (*current)[i][j];
             else
                 gameBoard[i][j] = 0;
+    std::fclose(f);
     return true;
 }

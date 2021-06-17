@@ -29,9 +29,9 @@ void test1() {
         }
         printf("\n");
     }
-    printf("valid = %d\n", game.isValid(&qwq));
+    printf("valid = %d\n", game.isValid());
 
-    game.GetSolution(&game.GetPuzzle(), SudokuGame::IDS);
+    game.GetSolution(&game.GetPuzzle(), SudokuGame::ASTAR);
 
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
@@ -40,7 +40,7 @@ void test1() {
         }
         printf("\n");
     }
-    printf("valid = %d\n", game.isValid(&qwq));
+    printf("valid = %d\n", game.isValid());
 }
 
 void test2() {
@@ -114,7 +114,8 @@ void test2() {
     qwq = &nosolution;
     clock_t bgn = clock();
     SudokuGame game;
-    game.GetSolution(qwq, SudokuGame::IDS);
+    printf("suc = %d\n", game.GetSolution(qwq, SudokuGame::IDS));
+    // printf("valid=%d\n", game.isValid());
     printf("time used = %lf\n",
             1.00 * (clock() - bgn) / CLOCKS_PER_SEC);
     for (int i = 0; i < 9; i++) {
@@ -130,6 +131,7 @@ void test3() {
     srand((unsigned long)new char*);
     clock_t bgn = clock();
     int k = 1;
+    double timeused = 0.00, nowt;
     while (true) {
         seed = rand();
         // seed = 249804641;
@@ -138,27 +140,28 @@ void test3() {
         // seed = 409603424
         SudokuGame game(seed);
         game.GeneratePuzzle();
-        double timeused = 1.00 * (clock() - bgn) / CLOCKS_PER_SEC;
-        printf("cnt=%d, time used = %lf\n", k, timeused);
+        assert(game.isValid());
+        nowt = 1.00 * (clock() - bgn) / CLOCKS_PER_SEC;
+        printf("cnt=%d, time used = %lf, delta time = %.2lfms\n", k, nowt, (nowt - timeused) * 1000);
+        // printf("%d\n", game.isValid());
+        // printf("%.2lf\n", (nowt - timeused) * 1000);
+        timeused = nowt;
         k++;
         // int qwq[9][9];
-        // if (timeused >= 0.200) {
-        //     printf("seed = %lu\n", seed);
-        //     getchar();
-        //     // for (int i = 0; i < 9; i++) {
-        //     //     for (int j = 0; j < 9; j++) {
-        //     //         qwq[i][j] = game.at(i, j);
-        //     //         printf("%d ", qwq[i][j]);
-        //     //     }
-        //     //     printf("\n");
-        //     // }
-        //     // printf("\n");
-        //     // break;
+        // printf("seed = %lu\n", seed);
+        // getchar();
+        // for (int i = 0; i < 9; i++) {
+        //     for (int j = 0; j < 9; j++) {
+        //         qwq[i][j] = game.at(i, j);
+        //         printf("%d ", qwq[i][j]);
+        //     }
+        //     printf("\n");
         // }
+        // printf("\n");
     }
 }
 
 int main() {
-    test3();
+    test1();
     return 0;
 }
