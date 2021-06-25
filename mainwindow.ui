@@ -30,7 +30,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="page">
      <widget class="QPushButton" name="pushButton_generate">
@@ -42,11 +42,46 @@
         <height>51</height>
        </rect>
       </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="text">
-       <string>新建游戏（自动生成）</string>
+       <string>新建游戏（保证有解）</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_input">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>220</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>用户输入数独</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_exitgame">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>380</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>退出游戏</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_generate_base">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -55,12 +90,306 @@
         <height>51</height>
        </rect>
       </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
       <property name="text">
-       <string>新建游戏（用户输入）</string>
+       <string>新建游戏（不保证有解）</string>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="spinBox">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>170</y>
+        <width>81</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="accelerated">
+       <bool>true</bool>
+      </property>
+      <property name="suffix">
+       <string>个</string>
+      </property>
+      <property name="prefix">
+       <string>挖空</string>
+      </property>
+      <property name="minimum">
+       <number>3</number>
+      </property>
+      <property name="maximum">
+       <number>64</number>
+      </property>
+      <property name="singleStep">
+       <number>1</number>
+      </property>
+      <property name="value">
+       <number>15</number>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_readfile">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>290</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>读取进度</string>
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="page_2"/>
+    <widget class="QWidget" name="page_2">
+     <widget class="QPushButton" name="pushButton_exitgame_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>380</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>退出游戏</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_hint">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>40</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>提示</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_giveup">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>310</y>
+        <width>101</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>放弃此局游戏</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_printsoln">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>310</y>
+        <width>71</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>输出解</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>110</y>
+        <width>171</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <item>
+       <property name="text">
+        <string>稳定搜索</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>搜索</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>迭代加深搜索</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>A*算法</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>160</y>
+        <width>51</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>还剩</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>160</y>
+        <width>51</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>个空</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_cnt">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>150</y>
+        <width>31</width>
+        <height>71</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>25</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>15</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_save">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>250</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>保存进度</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="page_3">
+     <widget class="QPushButton" name="pushButton_input_end">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>110</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>完成输入</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_input_giveup">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>380</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::NoFocus</enum>
+      </property>
+      <property name="text">
+       <string>放弃输入</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="page_4">
+     <widget class="QLabel" name="label_3">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>140</y>
+        <width>141</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>25</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>游戏结束！</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButton_goback">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>380</y>
+        <width>171</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>返回</string>
+      </property>
+     </widget>
+    </widget>
    </widget>
    <widget class="QTableWidget" name="tableWidget">
     <property name="geometry">
@@ -79,7 +408,7 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>18</pointsize>
+      <pointsize>25</pointsize>
      </font>
     </property>
     <property name="styleSheet">
@@ -297,6 +626,54 @@
     <hint type="sourcelabel">
      <x>555</x>
      <y>156</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_exitgame</sender>
+   <signal>clicked()</signal>
+   <receiver>actionExit</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>555</x>
+     <y>426</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_exitgame_2</sender>
+   <signal>clicked()</signal>
+   <receiver>actionExit</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>555</x>
+     <y>426</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_hint</sender>
+   <signal>clicked()</signal>
+   <receiver>actionHint</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>555</x>
+     <y>86</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>

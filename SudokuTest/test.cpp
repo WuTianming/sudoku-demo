@@ -161,7 +161,45 @@ void test3() {
     }
 }
 
+void test4() {
+    int blank[9][9] = {
+        {1,2,3,4,5,6,7,8,9},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0}
+    };
+    SudokuGame a;
+    // a.SetPuzzle(&blank);
+    a.Save("test00", &blank);
+}
+
+void test5() {
+    int qwq[9][9];
+    SudokuGame game;
+    game.Read("test00", &qwq);
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            printf("%d ", qwq[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    printf("\n");
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            qwq[i][j] = game.at(i, j);
+            printf("%d ", qwq[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 int main() {
-    test1();
+    test3();
     return 0;
 }

@@ -8,10 +8,12 @@
 #include <stack>
 #include <cstdio>
 #include <random>
+#include <string>
 #include <vector>
 #include <cstring>
 #include <iostream>
 #include <algorithm>
+#include <pthread.h>
 
 #define XSUDOKU
 class SudokuGame
@@ -19,7 +21,7 @@ class SudokuGame
 public:
     SudokuGame();
     SudokuGame(unsigned seed);
-    void GeneratePuzzle();
+    void GeneratePuzzle(bool filled = true, int cnt = 17);
     void RemoveDigits(int remain);
 
     auto &GetPuzzle() { return this->gameBoard; }
@@ -28,12 +30,14 @@ public:
     int  at(int i, int j);
     // bool isGiven(int i, int j);
     bool isValid();
+    static bool verify(const int ans[9][9]);
+    static bool cal_flag(const int s[9][9], uint16_t flag[4][9]);
 
     enum {
-        STABLE_DFS = 1, DFS, IDS, ASTAR, IDASTAR, DLX,
-        PARALLEL_DFS = 10
+        STABLE_DFS = 0, DFS, IDS, ASTAR, IDASTAR = 10, DLX,
+        PARALLEL_DFS = 4
     };
-    static bool GetSolution(int (*p)[9][9], int MOD = 1);
+    static int  GetSolution(int (*p)[9][9], int MOD = 1);
 
     void Save(const char *filename, const int (*current)[9][9]);
     bool Read(const char *filename, int (*current)[9][9]);
@@ -44,7 +48,8 @@ private:
     int  gameBoard[9][9];
     // bool given[9][9];
     std::default_random_engine rand;
-    bool GenSolvable_rand17(int s[9][9], int dep);
+    bool GenRand(int s[9][9], uint16_t flag[4][9], int cnt = 17, bool solvable = true);
+    bool GenSolvable_rand17(int s[9][9], int dep = 9);
 
     static inline int  count_bits(int t) {
 #define lowbit(t) ((t) & (-(t)))
@@ -75,12 +80,10 @@ private:
         if (i+j==8) flag[3][1] ^= bit;
 #endif
     }
-    static bool cal_flag(const int s[9][9], uint16_t flag[4][9]);
     static bool dfs(int stk[9][9], uint16_t flag[4][9], int i0, int j0);
     static bool ids(int stk[9][9], uint16_t flag[4][9],
                     int nowdep, int maxdep, int &dep_reached);
     static bool astar(int stk[9][9]);
-    static bool verify(const int ans[9][9]);
 };
 
 #endif // SUDOKUGAME_H

@@ -1,23 +1,33 @@
 #include "sudokugame.h"
 #include "sudokunode.h"
+#include <ctime>
 
 // the constructor in turn calls the constructor of the random generator.
-SudokuGame::SudokuGame() : rand(time(NULL)) {}
-SudokuGame::SudokuGame(unsigned seed) : rand(seed) {}
+SudokuGame::SudokuGame() : rand(time(NULL)) {
+    memset(gameBoard, 0, sizeof(gameBoard));
+}
+SudokuGame::SudokuGame(unsigned seed) : rand(seed) {
+    memset(gameBoard, 0, sizeof(gameBoard));
+}
 // SudokuGame::SudokuGame() : rand(QDateTime::currentMSecsSinceEpoch())
 
-// try to generate valid filled Sudoku puzzles using rand17 & solve method
-bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 9)
+// bool solvable: if set to true, the function must return false when it finds that generation has failed; otherwise the function continues to generate even if a conflict occurs.
+bool SudokuGame::GenRand(int s[9][9], uint16_t flag[4][9], int cnt, bool solvable)
 {
-    uint16_t flag[4][9];
     memset(s, 0, sizeof(int) * 81);
-    memset(flag, 0, sizeof(flag));
-    for (int T = 1; T <= 17; T++) {
+    memset(flag, 0, sizeof(uint16_t) * 36);
+    for (int T = 1; T <= cnt; T++) {
         int i = rand() % 9, j = rand() % 9;
         while (s[i][j]) i = rand()%9, j = rand()%9;
         uint16_t fff = get_flag(flag, i, j);
         int cnt = count_bits(fff);
-        if (cnt == 9) return false;
+        if (cnt == 9) {
+            if (solvable)
+                return false;
+            else
+                // doesn't check if the sudoku is unsolvable; just generate!
+            { T--; continue; }
+        }
         int it = rand() % (9 - cnt) + 1;
         for (int k = 1; k <= 9; k++) {
             // count until the it-th vacant number
@@ -30,6 +40,14 @@ bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 9)
             }
         }
     }
+    return true;
+}
+
+// try to generate valid filled Sudoku puzzles using rand17 & solve method
+bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep)
+{
+    uint16_t flag[4][9];
+    if (!GenRand(s, flag, 17, true)) return false;
     int reached = 0;
     // return astar(s);
     for (int k = std::min(dep, 4); k <= dep; k++, reached = 0) {
@@ -40,12 +58,18 @@ bool SudokuGame::GenSolvable_rand17(int s[9][9], int dep = 9)
 }
 
 // generate valid filled Sudoku puzzles
-void SudokuGame::GeneratePuzzle()
+void SudokuGame::GeneratePuzzle(bool filled, int cnt)
 {
-    memset(gameBoard, 0, sizeof(gameBoard));
-    int i = 0;
-    static int per[] = { 7, 9, 14 };
-    while (!GenSolvable_rand17(gameBoard, per[i])) { (++i) %= 3; }
+    if (filled) {
+        memset(gameBoard, 0, sizeof(gameBoard));
+        int i = 0;
+        static int per[] = { 7, 9, 14 };
+        while (!GenSolvable_rand17(gameBoard, per[i])) { (++i) %= 3; }
+    } else {
+        memset(gameBoard, 0, sizeof(gameBoard));
+        uint16_t flag[4][9];
+        GenRand(gameBoard, flag, cnt, false);
+    }
 }
 
 // dig holes in gameBoard so that certain cells are left out
@@ -226,7 +250,6 @@ CLEANUP_AND_EXIT:
     return false;
 }
 
-// TODO
 bool SudokuGame::astar(int stk[9][9])
 {
     std::priority_queue<SudokuNode> Q;
@@ -279,7 +302,8 @@ bool SudokuGame::cal_flag(const int s[9][9], uint16_t flag[4][9])
     return true;
 }
 
-bool SudokuGame::GetSolution(int (*p)[9][9], int MOD)
+// returns count of solutions calculated
+int  SudokuGame::GetSolution(int (*p)[9][9], int MOD)
 {
     // uniqueness not guaranteed
     uint16_t flag[4][9];
@@ -292,15 +316,15 @@ bool SudokuGame::GetSolution(int (*p)[9][9], int MOD)
     int reached = 0;
     switch (MOD) {
         case SudokuGame::STABLE_DFS:
-            cal_flag(*p, flag);
+            if (!cal_flag(*p, flag)) return false;
             return dfs(*p, flag, 0, -1);
             break;
         case SudokuGame::DFS:
-            cal_flag(*p, flag);
+            if (!cal_flag(*p, flag)) return false;
             return ids(*p, flag, 1, 81, reached);
             break;
         case SudokuGame::IDS:
-            cal_flag(*p, flag);
+            if (!cal_flag(*p, flag)) return false;
             for (int k = std::min(maxdep, 5); k <= maxdep; k++, reached = 0) {
                 if (ids(*p, flag, 1, k, reached))
                     return true;
@@ -321,23 +345,29 @@ bool SudokuGame::GetSolution(int (*p)[9][9], int MOD)
             throw "not implemented";
             break;
         case SudokuGame::PARALLEL_DFS:
-            throw "not implemented";
+            throw "太麻烦了不想写";
             break;
     }
     return false;
 }
 
-// TODO 将当前的数独状态，记录名称，当前时间保存到同一目录的文件下
-void SudokuGame::Save(const char *filename, const int (*current)[9][9])
+void SudokuGame::Save(const char *name0, const int (*current)[9][9])
 {
     // saves the reference board and current filled board
     bool given[9][9];
-    std::memset(given, 0, sizeof(given));
+    std::memset(given, false, sizeof(given));
     for (int i = 0; i < 9; i++)
         for (int j = 0; j < 9; j++)
             if (gameBoard[i][j])
                 given[i][j] = true;
-    FILE *f = std::fopen(filename, "wb");
+    std::string filename(name0);
+    char Time[128];
+    std::time_t t = std::time(nullptr);
+    std::strftime(Time, sizeof(Time), "%c", std::localtime(&t));
+    filename.append(" ");
+    filename.append(Time);
+    filename.append(".sudokudat");
+    FILE *f = std::fopen(filename.c_str(), "wb");
     std::fwrite(*current, sizeof(int), 81, f);
     std::fwrite(given, sizeof(bool), 81, f);
     std::fclose(f);

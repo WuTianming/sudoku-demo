@@ -1,4 +1,5 @@
 #include "sudokunode.h"
+#include "sudokugame.h"
 
 SudokuNode::SudokuNode()
 {

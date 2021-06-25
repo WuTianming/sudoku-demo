@@ -1,7 +1,7 @@
 #ifndef SUDOKUNODE_H
 #define SUDOKUNODE_H
 
-#include "sudokugame.h"
+//#include "sudokugame.h"
 
 #include <ctime>
 #include <queue>
