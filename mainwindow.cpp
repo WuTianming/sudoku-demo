@@ -176,9 +176,12 @@ void MainWindow::on_tableWidget_cellChanged(int a, int b)
         ui->tableWidget->blockSignals(true);
         if (!tableVal[a][b])
             ui->tableWidget->item(a, b)->setText("");
-        else
+        else {
+            // put back
             ui->tableWidget->item(a, b)->
                     setText(QString::number(tableVal[a][b]));
+            remcnt--;
+        }
         ui->tableWidget->blockSignals(false);
 
         ui->statusbar->showMessage(status);
@@ -236,7 +239,7 @@ void MainWindow::on_tableWidget_cellChanged(int a, int b)
         ui->statusbar->showMessage(status);
     }
     ui->label_cnt->setText(QString::number(remcnt));
-    if (!remcnt) {
+    if (this->nowPane == 1 && !remcnt) {
         this->on_actionValidate_Answer_triggered();
     }
 }
@@ -371,6 +374,7 @@ void MainWindow::GetHint(bool all)
     }
     if (changed || !calced || prevmod != ui->comboBox->currentIndex() ) {
         prevmod = ui->comboBox->currentIndex();
+        qDebug() << "Hint method" << prevmod;
         memcpy(soln, tableVal, sizeof(soln));
         calced = SudokuGame::GetSolution(&soln, prevmod);
         if (!calced) {
@@ -457,14 +461,15 @@ void MainWindow::on_pushButton_save_clicked()
                               "Save file", "Please input file name:",
                               QLineEdit::Normal, "saved_game", &ok);
     if (ok)
-        game.Save(("../../../" + text).toStdString().c_str(), &tableVal);
+        game.Save((QCoreApplication::applicationDirPath() + "/../../../" + text).toStdString().c_str(), &tableVal);
     // needs to get out of the nested folders in an app bundle
+    // no idea why this would fail
 }
 
 void MainWindow::on_pushButton_readfile_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
-        "Load sudoku", "../../../", "Sudoku data files (*.sudokudat)");
+        "Load sudoku", QCoreApplication::applicationDirPath() + "../../../", "Sudoku data files (*.sudokudat)");
     if (!fileName.isNull() && !fileName.isEmpty()) {
         game.Read(fileName.toStdString().c_str(), &tableVal);       // TODO
         this->UpdateTableContents(false);
